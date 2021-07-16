@@ -5,45 +5,33 @@ import time
 
 # %%
 basissets = ['sto3g', 'sto-3g', '6-31g', '6-31g**', '6-31g(d,p)']
-molecules = [h2, he, lih, oh, h2o, ch4, co]
+molecules = {'h2': h2, 
+             'he': he,
+             'lih': lih, 
+             'oh': oh, 
+             'h2o': h2o,
+             'ch4': ch4, 
+             'co': co}
+basis_mol = [[i, j] for i in basissets for j in molecules.keys()]
+data = pd.DataFrame(basis_mol, columns=['basisset', 'molecule'])
 
 # %%
-# for molec in molecules: 
-#     for basis in basissets: 
-#         start = time.time()
-#         bfs = basisset(molec, basis)
-#         solver = rohf(molec, bfs) if molec == oh else rhf(molec, bfs)
-#         ens = solver.converge()
-#         print(f'{molec.stoich()} with {basis} basis set has energy: {ens[-1]} in {time.time() - start} sec')
+energy = []
+t = []
+for index, contents in data.iterrows():
+    start_time = time.time()
+    molec = molecules[contents['molecule']]
+    bfs = basisset(molec, contents['basisset'])
+    solver = rohf(molec, bfs) if contents['molecule'] == 'oh' else rhf(molec, bfs)
+    energy += [solver.converge()[-1]]
+    t += [time.time() - start_time]
+data['energy'] = pd.Series(energy)
+data['t'] = pd.Series(t)
 
 # %%
-energies = pd.DataFrame(
-    index=[molec.stoich() for molec in molecules]
-)
-energies
+data.pivot(index='molecule', columns='basisset', values='energy')
 
 # %%
-times = pd.DataFrame(
-    index=[molec.stoich() for molec in molecules]
-)
-times
-
-# %%
-for basis in basissets: 
-    energy = []
-    t = []
-    for molec in molecules: 
-        start = time.time()
-        bfs = basisset(molec, basis)
-        solver = rohf(molec, bfs) if molec == oh else rhf(molec, bfs)
-        energy += [solver.converge()[-1]]
-        t += [time.time() - start]
-    energies[basis] = energy
-    times[basis] = t
-
-# %%
-energies
-# %%
-times
+data.pivot(index='molecule', columns='basisset', values='t')
 
 # %%
