@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 # %%
-basissets = ['sto3g', 'sto-3g', '6-31g', '6-31g**', '6-31g(d,p)']
+basissets = ['sto3g', '6-31g', '6-31g**']
 molecules = {'h2': h2, 
              'he': he,
              'lih': lih, 
@@ -16,13 +16,17 @@ basis_mol = [[i, j] for i in basissets for j in molecules.keys()]
 data = pd.DataFrame(basis_mol, columns=['basisset', 'molecule'])
 
 # %%
+for key, value in molecules.items():
+    print(f"{key:3} | name: {value.name:10} mult: {value.multiplicity}")
+
+# %%
 energy = []
 t = []
 for index, contents in data.iterrows():
     start_time = time.time()
     molec = molecules[contents['molecule']]
     bfs = basisset(molec, contents['basisset'])
-    solver = rohf(molec, bfs) if contents['molecule'] == 'oh' else rhf(molec, bfs)
+    solver = rohf(molec, bfs) if molec.multiplicity > 1 else rhf(molec, bfs)
     energy += [solver.converge()[-1]]
     t += [time.time() - start_time]
 data['energy'] = pd.Series(energy)
